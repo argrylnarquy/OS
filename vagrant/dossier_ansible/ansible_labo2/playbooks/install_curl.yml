@@ -1,0 +1,11 @@
+---
+- name: Installer curl sur les machines distantes
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Installer curl
+      package:
+        name: curl
+        state: present

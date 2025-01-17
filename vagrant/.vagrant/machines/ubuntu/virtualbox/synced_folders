@@ -1,0 +1,1 @@
+{"virtualbox":{"/home/vagrant/dossier_partage":{"guestpath":"/home/vagrant/dossier_partage","hostpath":"C:/OS_2024_2025/vagrant/dossier_ansible","disabled":false,"__vagrantfile":true},"/vagrant":{"guestpath":"/vagrant","hostpath":"C:/OS_2024_2025/vagrant","disabled":false,"__vagrantfile":true}}}

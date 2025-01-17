@@ -1,0 +1,137 @@
+---
+- name: Mise à jour de tous les hôtes et installation des services
+  hosts: all
+  become: true
+  tasks:
+    - name: Mettre à jour le système
+      package:
+        name: "*"
+        state: latest
+      when: ansible_os_family != "Archlinux"
+      tags:
+        - update
+
+    - name: Initialiser la base de données MariaDB sur Arch Linux
+      command: mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+      when: ansible_os_family == "Archlinux"
+      tags:
+        - init_db
+        - mariadb
+
+    - name:  vérifier les permission du repertoire de données
+      file:
+        path: /var/lib/mysql
+        owner: mysql
+        group: mysql
+        recurse: yes
+      when: ansible_os_family == "Archlinux"
+      tags:
+        - fix_permission
+        - mariadb
+
+    - name: Démarrer et activer le service MariaDB
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+      when: ansible_os_family == "Archlinux"
+      tags:
+        - start
+        - mariadb
+
+- name: Mettre à jour le système sur Arch Linux
+  hosts: archlinux
+  become: true
+  tasks:
+    - name: Mettre à jour tous les paquets
+      command: pacman -Syu --noconfirm
+      tags:
+        - update
+
+- name: Installer et configurer Apache et PHP sur Fedora
+  hosts: fedora
+  become: true
+  tasks:
+    - name: Installer Apache et PHP
+      package:
+        name:
+          - httpd
+          - php
+        state: present
+      tags:
+        - install
+
+    - name: Démarrer et activer Apache
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+      tags:
+        - start
+
+- name: Installer et configurer MariaDB sur Arch Linux
+  hosts: archlinux
+  become: true
+  tasks:
+    - name: Installer MariaDB
+      package:
+        name: mariadb
+        state: present
+      tags:
+        - install
+
+    - name: Démarrer et activer MariaDB
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+      tags:
+        - start
+
+- name: Installer et configurer Samba sur Arch Linux
+  hosts: archlinux
+  become: true
+  tasks:
+    - name: Installer Samba
+      package:
+        name: samba
+        state: present
+      tags:
+        - samba
+
+    - name: Créer le fichier de configuration de Samba
+      copy:
+        content: |
+          [global]
+            workgroup = WORKGROUP
+            security = user
+            map to guest = bad user
+            dns proxy = no
+
+          [share]
+            path = /srv/samba/share
+            browseable = yes
+            guest ok = yes
+            read only = no
+        dest: /etc/samba/smb.conf
+      tags:
+        - samba
+
+    - name: Créer le répertoire de partage de Samba
+      file:
+        path: /srv/samba/share
+        state: directory
+        mode: '0777'
+        owner: nobody
+        group: nobody
+      tags:
+        - samba
+
+    - name: Démarrer et activer Samba
+      service:
+        name: smb
+        state: started
+        enabled: yes
+      tags:
+        - samba
+

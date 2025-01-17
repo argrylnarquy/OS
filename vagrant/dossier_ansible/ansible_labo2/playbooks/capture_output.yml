@@ -1,0 +1,13 @@
+---
+- name: Capture output de la commande ls -la /etc
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Capture output de la commande ls -la /etc/init.d
+      command: ls -la /etc/
+      register: ls_output
+
+    - name: Afficher le résultat de la commande
+      debug:
+        msg: "{{ ls_output.stdout_lines }}"

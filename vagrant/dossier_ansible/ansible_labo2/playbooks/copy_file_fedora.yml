@@ -1,0 +1,26 @@
+- name: Copier un fichier texte sur la machine Fedora
+  hosts: fedora
+  become: true
+  tasks:
+    - name: Copier le fichier texte vers le répertoire de l'utilisateur SSH
+      copy:
+        src: /home/vagrant/nouveau_fichier.txt
+        dest: /home/vagrant/nouveau_fichier.txt
+        owner: root
+        group: vagrant
+        mode: '0460'
+      tags:
+       - copy_file
+
+    - name: archiveé le fichier texte
+      archive:
+        path:
+          - /home/vagrant/mon_fichier.txt
+          - /home/vagrant/nouveau_fichier.txt
+        dest: /home/vagrant/mon_archive.tar.gz
+        format: gz
+      tags:
+        - archive_files
+
+
+

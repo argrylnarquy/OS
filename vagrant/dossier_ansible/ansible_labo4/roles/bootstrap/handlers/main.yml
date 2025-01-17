@@ -1,0 +1,6 @@
+---
+# handlers file for roles/bootstrap
+- name: Restart SSH service
+  service:
+    name: sshd
+    state: restarted

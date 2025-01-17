@@ -1,0 +1,36 @@
+---
+- name: Configurer Nginx sur Debian
+  hosts: debian
+  become: true
+  tasks:
+    - name: Vérifier que Nginx est installé
+      package:
+        name: nginx
+        state: present
+
+    - name: Copier le fichier de configuration Nginx
+      copy:
+        src: ../templates/nginx.conf
+        dest: /etc/nginx/sites-available/default
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Activer la configuration Nginx
+      file:
+        src: /etc/nginx/sites-available/default
+        dest: /etc/nginx/sites-enabled/default
+        state: link
+
+    - name: Copier le fichier index.html
+      template:
+        src: ../templates/index.html.j2
+        dest: /usr/share/nginx/html/index.html
+        owner: www-data
+        group: www-data
+        mode: 0644
+
+    - name: Redémarrer le service Nginx
+      service:
+        name: nginx
+        state: restarted

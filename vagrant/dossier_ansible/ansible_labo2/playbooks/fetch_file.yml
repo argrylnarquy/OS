@@ -1,0 +1,10 @@
+---
+- name: Récupérer le fichier depuis la machine Fedora
+  hosts: fedora
+  become: true
+  tasks:
+    - name: Récupérer le fichier copié sur Fedora
+      fetch:
+        src: /home/vagrant/mon_fichier.txt
+        dest: /home/vagrant/fetched_files/
+        flat: yes

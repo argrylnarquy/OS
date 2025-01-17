@@ -1,0 +1,13 @@
+---
+- name: Récupérer le contenu du site web local avec curl
+  hosts: debian
+  become: true
+
+  tasks:
+    - name: Récupérer le contenu du site web local
+      command: curl http://localhost
+      register: web_content
+
+    - name: Afficher le contenu du site web local
+      debug:
+        msg: "{{ web_content.stdout }}"

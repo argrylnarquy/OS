@@ -1,0 +1,71 @@
+---
+ 
+ - hosts: all
+   become: true
+   remote_user: vagrant
+   pre_tasks:
+  
+   - name: install upgrades (Debian)
+     tags: always
+     apt:
+       upgrade: dist
+       update_cache: yes
+     when: ansible_distribution == "Debian"
+      
+   - name: install upgrades (Fedora)
+     tags: always
+     dnf:
+       upgrade: dist
+       update_cache: yes
+     when: ansible_distribution == "Centos"
+     
+   - name: install upgrades (Arch)
+     tags: always
+     pacman:
+       upgrade: yes
+       update_cache: yes
+     when: ansible_distribution == "Archlinux"      
+     
+  
+   tasks:
+ 
+   - name: create alice user 
+     user:
+       name: alice
+       groups: root
+  
+   - name: add ssh key for alice
+     authorized_key:
+       user: alice
+       key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC9DVc07+5rQiA25zDMOwBXoUKnA9UBERLjzYyPv//td5VvVxdrbfWIr+yYiY0Nwwzco1PV+QK6r77l/WHCIKv+BhnG7yfnuwWSgeE8h/UOykzOOUVMgbe1Jv/JPTszg7p5EuH4q9GDzNsE48nT2Sdxuwslc7yi3SorjbN0KzJhyLtcp9M16GdbxFgZmxhcLSJ5MVsez9O7RrFepXXQxruS+pRvgv5uOBY4l54Iq4dv3NPSp5Rzmooy8TrObC5s6VjNEcaQfI3lwdvcP156R6PbS+9hnHI3yI4AzTx3fxT03OZqFGkWiCP3wb2QQQYLr4uTgEZKhEAAgPCaf7Iacygx6TkSH9M9M7qt11rQO+/TCoS/zcQ3gLtRg3AsRV5NnUoGv3MIBpjOsFakQOQbX6iEeF34oV6zh06Oj/klNBZ6gM2JIkWUukaFcNMPfoobdnkUmyQU4KhQcIslBu9N2aYkY2OZ3mQ5vOw73ofk1RP0hZklMZw+1qV+mNBqEhFTPCE= ansible
+"
+      
+   - name: add sudoers file for alice
+     copy:
+       src: sudoers_file
+       dest: /etc/sudoers.d/alice
+       owner: root
+       group: root
+       mode: 0440
+        
+   - name: Remove root SSH access
+     lineinfile: 
+      dest: /etc/ssh/sshd_config 
+      regexp: "^PermitRootLogin" 
+      line: "PermitRootLogin no" 
+      state: present 
+         
+       
+   - name: Remove password SSH access
+     lineinfile: 
+      dest: /etc/ssh/sshd_config 
+      regexp: "^PasswordAuthentication" 
+      line: "PasswordAuthentication no" 
+      state: present
+            
+   - name: Restart ssh
+     service:
+       name: sshd
+       state: restarted
+  
+    

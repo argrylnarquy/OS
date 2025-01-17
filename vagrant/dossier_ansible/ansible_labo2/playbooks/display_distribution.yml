@@ -1,0 +1,13 @@
+---
+- name: Afficher la distribution et la version GNU/Linux
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Afficher le nom de la distribution
+      debug:
+        msg: "La distribution utilisée est : {{ ansible_distribution }}"
+
+    - name: Afficher la version de la distribution
+      debug:
+        msg: "La version de la distribution est : {{ ansible_distribution_version }}"

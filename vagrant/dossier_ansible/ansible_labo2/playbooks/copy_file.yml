@@ -1,0 +1,23 @@
+---
+- name: Copier un fichier sur le serveur distant
+  hosts: all
+  gather_facts: false
+  vars:
+    dest_dir: "/tmp/default_directory"
+
+  tasks:
+    - name: Créer le répertoire de destination s'il n'existe pas
+      file:
+        path: "{{ dest_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copier le fichier example.txt vers le répertoire de destination
+      copy:
+        src: "~/dossier_partage/example.txt"
+        dest: "{{ dest_dir }}/example.txt"
+
+    - name: Afficher le répertoire de destination utilisé
+      debug:
+        msg: "Le fichier a été copié dans : {{ dest_dir }}"
+

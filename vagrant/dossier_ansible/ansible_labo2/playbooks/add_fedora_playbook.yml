@@ -1,0 +1,18 @@
+---
+- name: Ajouter Fedora temporairement à l'inventaire
+  hosts: localhost
+  tasks:
+    - name: Ajouter Fedora à l'inventaire temporairement
+      add_host:
+        name: fedora_temp
+        ansible_host: 192.168.2.21
+        ansible_user: vagrant
+        ansible_ssh_private_key_file: ~/.ssh/ansible_key
+
+- name: Collecter les facts et afficher les adresses IP
+  hosts: fedora_temp
+  gather_facts: true
+  tasks:
+    - name: Afficher les adresses IP de Fedora
+      debug:
+        msg: "{{ ansible_all_ipv4_addresses }}"

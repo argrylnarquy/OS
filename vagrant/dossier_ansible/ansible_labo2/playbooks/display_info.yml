@@ -1,0 +1,17 @@
+---
+- name: Afficher les informations des hôtes
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Afficher la variable commune
+      debug:
+        msg: "Variable commune : {{ common_variable }}"
+
+    - name: Afficher la variable spécifique de l'hôte
+      debug:
+        msg: "Variable spécifique : {{ custom_variable }}"
+
+    - name: Afficher la variable spécifique du groupe
+      debug:
+        msg: "Variable du groupe : {{ web_variable | default('Pas de variable de groupe') }}"

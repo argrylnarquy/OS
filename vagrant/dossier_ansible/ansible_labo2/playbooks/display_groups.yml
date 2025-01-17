@@ -1,0 +1,10 @@
+---
+- name: Afficher les groupes auxquels appartient un hôte
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Afficher les groupes auxquels appartient l'hôte
+      debug:
+        msg: "L'hôte {{ inventory_hostname }} appartient aux groupes : {{ group_names }}"
+
