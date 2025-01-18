@@ -1,84 +1,179 @@
 ---
-- name: Bootstrap initialization for Vagrant-managed systems
-  hosts: all
-  remote_user: vagrant
-  become: yes
+# - name: Bootstrap initialization for Vagrant-managed systems
+#   hosts: all
+#   remote_user: vagrant
+#   become: yes
+#   vars:
+#     username: alice
+#     shell: /bin/bash
+#     group: root
+#     password: vagrant
+#     allowed_users:
+#       - vagrant
+#     # ssh_public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+#   vars_files:
+#     - user_password.yml
+
+#   pre_tasks:
+#     - name: Update APT package manager
+#       apt:
+#         update_cache: yes
+#       when: ansible_os_family == "Debian"
+
+#     - name: Update DNF package manager
+#       dnf:
+#         update_cache: yes
+#       when: ansible_os_family == "RedHat"
+
+#     - name: Update PACMAN package manager
+#       pacman:
+#         update_cache: yes
+#       when: ansible_os_family == "Archlinux"
+
+#   tasks:
+#     - name: Ensure sudo package is installed
+#       package:
+#         name: sudo
+#         state: present
+
+#     - name: Create user
+#       user:
+#         name: "{{ username }}"
+#         shell: "{{ shell }}"
+#         password: "{{ user_password | password_hash('sha512') }}"
+#         groups: "{{ group }}"
+
+#     - name: Disable root SSH login
+#       lineinfile:
+#         path: /etc/ssh/sshd_config
+#         regexp: '^PermitRootLogin'
+#         line: 'PermitRootLogin no'
+#         state: present
+#       notify: Restart SSH service
+
+#     - name: Allow specific users to connect via SSH
+#       lineinfile:
+#         path: /etc/ssh/sshd_config
+#         regexp: '^AllowUsers'
+#         line: "AllowUsers {{ allowed_users | join(' ') }}"
+#         state: present
+#       notify: Restart SSH service
+
+#     - name: Add user to sudoers
+#       lineinfile:
+#         path: /etc/sudoers
+#         regexp: "^{{ username }}"
+#         line: "{{ username }} ALL=(ALL) NOPASSWD:ALL"
+#         state: present
+
+#     - name: Disable SSH password authentication
+#       lineinfile:
+#         path: /etc/ssh/sshd_config
+#         regexp: '^PasswordAuthentication'
+#         line: 'PasswordAuthentication no'
+#         state: present
+#       notify: Restart SSH service
+
+#     - name: Add SSH key for the user
+#       authorized_key:
+#         user: "{{ username }}"
+#         key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+#     - name: Verify user creation
+#       command: id {{ username }}
+#       register: user_check
+#       failed_when: user_check.rc != 0
+
+#   handlers:
+#     - name: Restart SSH service
+#       service:
+#         name: sshd
+#         state: restarted
+
+
+
+
+- hosts: all
+  become: true
+
   vars:
     username: alice
-    shell: /bin/bash
-    group: root
-    allowed_users:
+    allowed_ssh_users:
       - vagrant
-    ssh_public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4wPk4wnYgkpVT0BHL+NC9GMYPWISWxzo6gMFVc4sRWPr7wi6zu0xygRZckCvO6QBYPAbP3RkrYP+ayW71wIj6aOSX9EZISW3xCYcouNR0J2Hp3V2Xsf6xS4qOWt1y2lasqzSx8rhgq4NEqQFZrDyV9ncfbAsNI5v81DGk5XWX+7b/5zGnUuLytdSO+RReA9K6zbh83R+fx3Tb4QoIlVAVc7Q6LigplNwS/GAClvjPjYAPHdOAJXfQHoeuP6hGlXentE4LbEL28dLCir1sp4h9hbZgw/MYbmhqyukBVIH2zr0oeuiijuCzttszd5VtxjlvTMavkerlBi6bE1zCXnVD vagrant@ubuntu-ansible"
+      - alice
 
+  vars_files:
+    - user_password.yml
   pre_tasks:
-    - name: Update APT package manager
+    - name: Update apt cache (Debian/Ubuntu)
       apt:
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Update DNF package manager
+    - name: Update dnf cache (Fedora)
       dnf:
         update_cache: yes
-      when: ansible_os_family == "RedHat"
+      when: ansible_distribution == "Fedora"
 
-    - name: Update PACMAN package manager
+    - name: Update pacman cache (Arch Linux)
       pacman:
         update_cache: yes
-      when: ansible_os_family == "Archlinux"
-
+      when: ansible_distribution == "Archlinux"
+  tags:
+    - groups
   tasks:
-    - name: Ensure sudo package is installed
+    - name: Ensure sudo is installed
       package:
         name: sudo
         state: present
 
-    - name: Create user
+    - name: Create wheel group if it doesn't exist
+      group:
+        name: wheel
+        state: present
+      when: ansible_distribution == "Debian"
+
+    - name: Créer l'utilisateur avec le mot de passe chiffré
       user:
         name: "{{ username }}"
-        shell: "{{ shell }}"
-        groups: "{{ group }}"
+        password: "{{ user_password | password_hash('sha512') }}"
+        state: present
+      no_log: true
 
-    - name: Disable root SSH login
+    - name: Disable root SSH access
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PermitRootLogin'
         line: 'PermitRootLogin no'
-        state: present
+      notify: Restart SSH
 
-    - name: Allow specific users to connect via SSH
+    - name: Allow specific users SSH access
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^AllowUsers'
-        line: "AllowUsers {{ allowed_users | join(' ') }}"
-        state: present
+        line: "AllowUsers {{ allowed_ssh_users | join(' ') }}"
+      notify: Restart SSH
 
-    - name: Add user to sudoers
+    - name: Add new user to sudoers
       lineinfile:
         path: /etc/sudoers
-        regexp: "^{{ username }}"
-        line: "{{ username }} ALL=(ALL) NOPASSWD:ALL"
-        state: present
+        line: '{{ username }} ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
 
     - name: Disable SSH password authentication
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PasswordAuthentication'
         line: 'PasswordAuthentication no'
-        state: present
+      notify: Restart SSH
 
-    - name: Add SSH key for the user
+    - name: Add SSH key for new user
       authorized_key:
         user: "{{ username }}"
-        key: "{{ ssh_public_key }}"
-
-    - name: Verify user creation
-      command: id {{ username }}
-      register: user_check
-      failed_when: user_check.rc != 0
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
   handlers:
-    - name: Restart SSH service
+    - name: Restart SSH
       service:
         name: sshd
         state: restarted
